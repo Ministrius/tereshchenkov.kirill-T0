@@ -31,7 +31,7 @@ public:
 
     void move(double dx, double dy) override;
     void scale(double factor) override;
-    
+
 private:
     double radiusIn_;
     double radiusOut_;

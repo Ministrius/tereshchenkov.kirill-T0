@@ -15,7 +15,7 @@ public:
     Point getCenter() const override {
         double centerX = (bl_.x_ + tr_.x_) / 2.0;
         double centerY = (bl_.y_ + tr_.y_) / 2.0;
-        return Point(centerX, centerY);  
+        return Point(centerX, centerY);
     }
 
     std::string getName() const override { return "Rectangle"; }
