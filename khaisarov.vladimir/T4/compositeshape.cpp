@@ -28,7 +28,7 @@ std::pair<Point, Point> CompositeShape::Bounds() const
 {
     if (shapes.empty())
     {
-        throw std::invalid_argument("CShape is empty");
+        throw std::invalid_argument("CShape is empty\n");
     }
 
     double minX = shapes[0]->Bounds().first.x;
