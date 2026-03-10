@@ -2,11 +2,10 @@
 
 Rectangle::Rectangle(Point leftBottom, Point rightTop)
 {
-
     center_ = { (leftBottom.x + rightTop.x) / 2, (leftBottom.y + rightTop.y) / 2 };
     height_ = (rightTop.y - leftBottom.y);
     width_ = (rightTop.x - leftBottom.x);
-    if (height_ <= 0 || width_ <=0) {
+    if (height_ <= 0 || width_ <= 0) {
         throw std::invalid_argument("Rectangle: height and width are supposed to be greater than zero");
     }
 }
@@ -42,5 +41,8 @@ std::string Rectangle::getName() const
 
 RectanglePoints Rectangle::getBorderRectangle() const
 {
-    return { {center_.x - width_/2, center_.y - height_/2} ,  {center_.x + width_ / 2, center_.y + height_ / 2 } };
+    return {
+        { center_.x - width_ / 2, center_.y - height_ / 2 },
+        { center_.x + width_ / 2, center_.y + height_ / 2 }
+    };
 }

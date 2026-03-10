@@ -15,7 +15,6 @@ public:
     virtual void scale(double coeff) = 0;
     virtual std::string getName() const = 0;
     virtual RectanglePoints getBorderRectangle() const = 0;
-
 };
 
 #endif

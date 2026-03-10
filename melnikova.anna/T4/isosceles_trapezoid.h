@@ -3,7 +3,6 @@
 
 #include "shape.h"
 
-
 class IsoscelesTrapezoid : public Shape {
 private:
     Point center_;

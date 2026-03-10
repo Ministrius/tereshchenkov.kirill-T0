@@ -5,6 +5,7 @@ struct Point {
     double x;
     double y;
 };
+
 struct RectanglePoints {
     Point leftBottom_;
     Point rightTop_;

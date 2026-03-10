@@ -21,7 +21,7 @@ Point IsoscelesTrapezoid::getCenter() const
 
 void IsoscelesTrapezoid::move(double dx, double dy)
 {
-    center_ = { (center_.x + dx),(center_.y + dy) };
+    center_ = { (center_.x + dx), (center_.y + dy) };
 }
 
 void IsoscelesTrapezoid::scale(double coeff)
@@ -42,9 +42,8 @@ std::string IsoscelesTrapezoid::getName() const
 RectanglePoints IsoscelesTrapezoid::getBorderRectangle() const
 {
     double maxBase = std::max(baseBottom_, baseTop_);
-
     return {
-    {center_.x - maxBase / 2.0, center_.y - height_ / 2.0},
-    {center_.x + maxBase / 2.0, center_.y + height_ / 2.0}
+        { center_.x - maxBase / 2.0, center_.y - height_ / 2.0 },
+        { center_.x + maxBase / 2.0, center_.y + height_ / 2.0 }
     };
 }

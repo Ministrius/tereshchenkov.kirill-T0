@@ -3,7 +3,6 @@
 
 #include "shape.h"
 
-
 class Circle : public Shape {
 private:
     Point center_;
@@ -16,7 +15,6 @@ public:
     void scale(double coeff) override;
     std::string getName() const override;
     RectanglePoints getBorderRectangle() const override;
-
 };
 
 #endif

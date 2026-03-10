@@ -3,7 +3,7 @@
 
 #include "shape.h"
 
-class Rectangle: public Shape {
+class Rectangle : public Shape {
 private:
     Point center_;
     double height_;
@@ -16,7 +16,6 @@ public:
     void scale(double coeff) override;
     std::string getName() const override;
     RectanglePoints getBorderRectangle() const override;
-
 };
 
 #endif
