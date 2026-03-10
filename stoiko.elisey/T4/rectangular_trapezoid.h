@@ -1,5 +1,5 @@
-#ifndef RECT_TRAPEZOID_H
-#define RECT_TRAPEZOID_H
+#ifndef RECTANGULAR_TRAPEZOID_H
+#define RECTANGULAR_TRAPEZOID_H
 
 #include "point.h"
 #include "shape.h"
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif // RECT_TRAPEZOID_H
+#endif // RECTANGULAR_TRAPEZOID_H
