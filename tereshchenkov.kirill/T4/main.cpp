@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "lib/rectangle.h"
-#include "lib/ring.h"
-#include "lib/trap.h"
-#include "lib/complex.h"
+#include "rectangle.h"
+#include "ring.h"
+#include "trap.h"
+#include "complex.h"
 
 int main() {
     std::vector<std::unique_ptr<Shape>> shapes;
