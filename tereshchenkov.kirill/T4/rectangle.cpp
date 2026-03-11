@@ -1,5 +1,7 @@
 #include "rectangle.h"
 
+#include <stdexcept>
+
 
 Rectangle::Rectangle(const Point& bl, const Point& tr) : bottomLeft(bl), topRight(tr)
 {
