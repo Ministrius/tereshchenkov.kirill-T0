@@ -2,7 +2,7 @@
 
 
 Trap::Trap(const Point& bl, const double bottom, const double top, const double h) : \
-bottomLeft_(bl), bottomLenght_(bottom), topLenght_(top), height_(h)
+bottomLeft_(bl), topLenght_(bottom), bottomLenght_(top), height_(h)
 {
 }
 
