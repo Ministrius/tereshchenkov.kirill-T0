@@ -7,6 +7,10 @@
 #include "composite_shape.h"
 
 int main() {
+    if (argc == 1) {
+        std::cerr << "Error: No input arguments provided" << std::endl;
+        return 1;
+    }
     std::vector<std::unique_ptr<Shape>> scene;
 
     scene.push_back(std::make_unique<Rectangle>(Point{ 0, 0 }, Point{ 2, 2 }));
