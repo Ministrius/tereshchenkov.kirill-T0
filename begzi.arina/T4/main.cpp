@@ -6,7 +6,7 @@
 #include "trapezoid.h"
 #include "composite_shape.h"
 
-int main() {
+int main(int argc, char* argv[]) {
     if (argc == 1) {
         std::cerr << "Error: No input arguments provided" << std::endl;
         return 1;
