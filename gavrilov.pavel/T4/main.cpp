@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     composite->addShape(std::make_unique<Rectangle>(Point(10.0, 10.0), Point(13.0, 12.0)));
     composite->addShape(std::make_unique<Square>(Point(15.0, 10.0), 2.0));
     composite->addShape(std::make_unique<Ring>(Point(11.0, 15.0), 2.0, 1.0));
-    
+
     shapes.push_back(std::move(composite));
 
     std::cout << "=== SHAPES BEFORE SCALING ===\n";
