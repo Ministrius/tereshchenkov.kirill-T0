@@ -29,20 +29,30 @@ int main() {
 
     shapes.push_back(std::move(composite));
 
-    std::cout << "BEFORE SCALING BY 2:\n";
-    std::cout << "====================\n";
+    std::cout << "=== SHAPES BEFORE SCALING ===\n";
+    std::cout << "=============================\n";
     for (const auto& shape : shapes) {
         shape->print();
         std::cout << "\n";
     }
 
-    std::cout << "\nSCALING BY 2...\n\n";
-    for (auto& shape : shapes) {
-        shape->scale(2.0);
+    double factor;
+    std::cout << "\nEnter scale factor: ";
+    std::cin >> factor;
+
+    if (std::cin.fail() || factor <= 0) {
+        std::cout << "Error: scale factor must be a positive number!\n";
+        return 1;
     }
 
-    std::cout << "AFTER SCALING BY 2:\n";
-    std::cout << "===================\n";
+    std::cout << "\nSCALING WITH FACTOR " << factor << "...\n\n";
+
+    for (auto& shape : shapes) {
+        shape->scale(factor);
+    }
+
+    std::cout << "=== SHAPES AFTER SCALING ===\n";
+    std::cout << "============================\n";
     for (const auto& shape : shapes) {
         shape->print();
         std::cout << "\n";
