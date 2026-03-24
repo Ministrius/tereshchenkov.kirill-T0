@@ -32,7 +32,7 @@ int main() {
         return 1;
     }
     for (auto& s : shapes)
-        s->scale(2);
+        s->scale(factorInput);
     std::cout << "after:" << std::endl;
     for (const auto& s : shapes) {
         Point c = s->getCenter();
