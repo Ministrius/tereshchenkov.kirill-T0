@@ -59,19 +59,19 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
     if (!std::getline(in, line)) {
         return in;
     }
-    
+
     if (line.empty() || line.front() != '(' || line.back() != ')') {
         in.setstate(std::ios::failbit);
         return in;
     }
-    
+
     std::string content = line.substr(1, line.length() - 2);
-    
+
     std::vector<std::string> parts;
     std::string current;
     int bracketDepth = 0;
     bool inQuotes = false;
-    
+
     for (char c : content) {
         if (c == '"') {
             inQuotes = !inQuotes;
@@ -94,24 +94,24 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
     if (!current.empty()) {
         parts.push_back(current);
     }
-    
+
     double key1 = 0.0;
     std::pair<long long, unsigned long long> key2;
     std::string key3;
     bool key1Set = false;
     bool key2Set = false;
     bool key3Set = false;
-    
+
     for (const auto& part : parts) {
         size_t spacePos = part.find(' ');
         if (spacePos == std::string::npos) {
             in.setstate(std::ios::failbit);
             return in;
         }
-        
+
         std::string fieldName = part.substr(0, spacePos);
         std::string fieldValue = part.substr(spacePos + 1);
-        
+
         if (fieldName == "key1") {
             if (parseDoubleLit(fieldValue, key1)) {
                 key1Set = true;
@@ -135,12 +135,12 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
             }
         }
     }
-    
+
     if (!key1Set || !key2Set || !key3Set) {
         in.setstate(std::ios::failbit);
         return in;
     }
-    
+
     data.key1 = key1;
     data.key2 = key2;
     data.key3 = key3;
@@ -185,15 +185,15 @@ bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
 
 int main() {
     std::vector<DataStruct> dataVector;
-    
+
     std::istream_iterator<DataStruct> inputBegin(std::cin);
     std::istream_iterator<DataStruct> inputEnd;
     std::copy(inputBegin, inputEnd, std::back_inserter(dataVector));
-    
+
     std::sort(dataVector.begin(), dataVector.end(), compareDataStruct);
-    
+
     std::ostream_iterator<DataStruct> outputBegin(std::cout, "\n");
     std::copy(dataVector.begin(), dataVector.end(), outputBegin);
-    
+
     return 0;
 }
