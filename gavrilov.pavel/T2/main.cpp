@@ -54,15 +54,9 @@ bool parseQuotedString(const std::string& str, std::string& value) {
     return false;
 }
 
-std::istream& operator>>(std::istream& in, DataStruct& data) {
-    std::string line;
-    if (!std::getline(in, line)) {
-        return in;
-    }
-
+bool parseDataStruct(const std::string& line, DataStruct& data) {
     if (line.empty() || line.front() != '(' || line.back() != ')') {
-        in.setstate(std::ios::failbit);
-        return in;
+        return false;
     }
 
     std::string content = line.substr(1, line.length() - 2);
@@ -105,8 +99,7 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
     for (const auto& part : parts) {
         size_t spacePos = part.find(' ');
         if (spacePos == std::string::npos) {
-            in.setstate(std::ios::failbit);
-            return in;
+            return false;
         }
 
         std::string fieldName = part.substr(0, spacePos);
@@ -116,35 +109,31 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
             if (parseDoubleLit(fieldValue, key1)) {
                 key1Set = true;
             } else {
-                in.setstate(std::ios::failbit);
-                return in;
+                return false;
             }
         } else if (fieldName == "key2") {
             if (parseRational(fieldValue, key2)) {
                 key2Set = true;
             } else {
-                in.setstate(std::ios::failbit);
-                return in;
+                return false;
             }
         } else if (fieldName == "key3") {
             if (parseQuotedString(fieldValue, key3)) {
                 key3Set = true;
             } else {
-                in.setstate(std::ios::failbit);
-                return in;
+                return false;
             }
         }
     }
 
     if (!key1Set || !key2Set || !key3Set) {
-        in.setstate(std::ios::failbit);
-        return in;
+        return false;
     }
 
     data.key1 = key1;
     data.key2 = key2;
     data.key3 = key3;
-    return in;
+    return true;
 }
 
 std::string formatDoubleLit(double value) {
@@ -185,15 +174,20 @@ bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
 
 int main() {
     std::vector<DataStruct> dataVector;
+    std::string line;
 
-    std::istream_iterator<DataStruct> inputBegin(std::cin);
-    std::istream_iterator<DataStruct> inputEnd;
-    std::copy(inputBegin, inputEnd, std::back_inserter(dataVector));
+    while (std::getline(std::cin, line)) {
+        DataStruct data;
+        if (parseDataStruct(line, data)) {
+            dataVector.push_back(data);
+        }
+    }
 
     std::sort(dataVector.begin(), dataVector.end(), compareDataStruct);
 
-    std::ostream_iterator<DataStruct> outputBegin(std::cout, "\n");
-    std::copy(dataVector.begin(), dataVector.end(), outputBegin);
+    for (const auto& data : dataVector) {
+        std::cout << data << "\n";
+    }
 
     return 0;
 }
