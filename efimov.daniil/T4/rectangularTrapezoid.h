@@ -1,6 +1,6 @@
 #ifndef RECTANGULARTRAPEZOID_H
 #define RECTANGULARTRAPEZOID_H
-#include "shape.h"
+#include "Shape.h"
 #include "point.h"
 #include <string>
 
