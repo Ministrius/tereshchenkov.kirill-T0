@@ -1,8 +1,9 @@
 #include "circle.hpp"
 #include <stdexcept>
 #include <cmath>
-#include <numbers>
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 Circle::Circle(const Point& center, double radius)
     : center_(center), radius_(radius) {
@@ -12,7 +13,7 @@ Circle::Circle(const Point& center, double radius)
 }
 
 double Circle::getArea() const {
-    return std::numbers::pi * radius_ * radius_;
+    return M_PI * radius_ * radius_;
 }
 
 Point Circle::getCenter() const {
