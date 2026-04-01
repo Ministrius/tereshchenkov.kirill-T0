@@ -37,16 +37,13 @@ bool isRational(const std::string& s)
 {
     if (s.empty() || s.front() != '(' || s.back() != ')') return false;
     std::string inner = s.substr(1, s.length() - 2);
-    size_t pos = 0;
     try {
-        long long num;
-        unsigned long long den;
         if (inner.find(":N") == std::string::npos) return false;
         if (inner.find(":D") == std::string::npos) return false;
         size_t nPos = inner.find(":N") + 2;
         size_t dPos = inner.find(":D") + 2;
-        num = std::stoll(inner.substr(nPos, inner.find(":", nPos) - nPos));
-        den = std::stoull(inner.substr(dPos, inner.find(":", dPos) - dPos));
+        std::stoll(inner.substr(nPos, inner.find(":", nPos) - nPos));
+        unsigned long long den = std::stoull(inner.substr(dPos, inner.find(":", dPos) - dPos));
         return den != 0;
     } catch (...) {
         return false;
