@@ -78,12 +78,8 @@ std::istream& operator>>(std::istream& in, DataStruct& data)
         return in;
     }
 
-    if (line.empty())
-    {
-        return in;
-    }
-
-    if (line.front() != '(' || line.back() != ')')
+    // Пропускаем пустые строки и строки с неправильным форматом
+    if (line.empty() || line.front() != '(' || line.back() != ')')
     {
         return in;
     }
@@ -159,7 +155,7 @@ std::istream& operator>>(std::istream& in, DataStruct& data)
     {
         data = result;
     }
-
+    // Для неподходящих строк ничего не делаем, просто возвращаем поток
     return in;
 }
 
