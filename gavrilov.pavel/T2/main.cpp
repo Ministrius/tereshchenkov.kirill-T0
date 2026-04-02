@@ -71,7 +71,7 @@ std::string parseQuotedString(const std::string& s)
     return s.substr(1, s.length() - 2);
 }
 
-class IgnoreFailIterator
+class InputStreamIterator
 {
 public:
     using iterator_category = std::input_iterator_tag;
@@ -80,8 +80,8 @@ public:
     using pointer = const DataStruct*;
     using reference = const DataStruct&;
 
-    IgnoreFailIterator() : in_(nullptr), valid_(false) {}
-    explicit IgnoreFailIterator(std::istream& in) : in_(&in), valid_(true)
+    InputStreamIterator() : in_(nullptr) {}
+    explicit InputStreamIterator(std::istream& in) : in_(&in)
     {
         ++(*this);
     }
@@ -89,9 +89,8 @@ public:
     reference operator*() const { return value_; }
     pointer operator->() const { return &value_; }
 
-    IgnoreFailIterator& operator++()
+    InputStreamIterator& operator++()
     {
-        valid_ = false;
         if (!in_) return *this;
 
         std::string line;
@@ -100,26 +99,26 @@ public:
             std::istringstream iss(line);
             if (iss >> value_)
             {
-                valid_ = true;
-                break;
+                return *this;
             }
         }
+        in_ = nullptr;
         return *this;
     }
 
-    IgnoreFailIterator operator++(int)
+    InputStreamIterator operator++(int)
     {
-        IgnoreFailIterator tmp = *this;
+        InputStreamIterator tmp = *this;
         ++(*this);
         return tmp;
     }
 
-    bool operator==(const IgnoreFailIterator& other) const
+    bool operator==(const InputStreamIterator& other) const
     {
-        return (valid_ == other.valid_) && (in_ == other.in_);
+        return in_ == other.in_;
     }
 
-    bool operator!=(const IgnoreFailIterator& other) const
+    bool operator!=(const InputStreamIterator& other) const
     {
         return !(*this == other);
     }
@@ -127,7 +126,6 @@ public:
 private:
     std::istream* in_;
     DataStruct value_;
-    bool valid_;
 };
 
 std::istream& operator>>(std::istream& in, DataStruct& data)
@@ -233,8 +231,8 @@ int main()
 {
     std::vector<DataStruct> dataVector;
 
-    IgnoreFailIterator inputBegin(std::cin);
-    IgnoreFailIterator inputEnd;
+    InputStreamIterator inputBegin(std::cin);
+    InputStreamIterator inputEnd;
     std::copy(inputBegin, inputEnd, std::back_inserter(dataVector));
 
     std::sort(dataVector.begin(), dataVector.end(),
