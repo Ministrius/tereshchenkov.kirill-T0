@@ -8,6 +8,7 @@
 #include <limits>
 #include <complex>
 #include <sstream>
+#include <cctype>
 
 namespace nspace {
     const double EPS = 1e-9;
@@ -18,16 +19,13 @@ namespace nspace {
         std::string key3;
     };
 
-    std::istream& parseNumber(std::istream& in, unsigned long long& dest) {
-        std::string token;
-        in >> token;
-
-        if (token.empty()) {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
+    // Функция для парсинга числа с суффиксом
+    bool parseNumber(const std::string& token, unsigned long long& dest) {
+        if (token.empty()) return false;
 
         std::string numStr = token;
+
+        // Убираем суффикс
         if (token.back() == 'd') {
             numStr = token.substr(0, token.length() - 1);
         }
@@ -37,118 +35,147 @@ namespace nspace {
         else if (token.length() >= 3 && token.substr(token.length() - 3) == "ull") {
             numStr = token.substr(0, token.length() - 3);
         }
+        else if (token.length() >= 2 && token.substr(0, 2) == "0x") {
+            // hex
+            std::istringstream iss(token);
+            iss >> std::hex >> dest;
+            return !iss.fail();
+        }
+        else if (token.length() >= 2 && token.substr(0, 2) == "0b") {
+            // binary
+            numStr = token.substr(2);
+            dest = 0;
+            for (char c : numStr) {
+                if (c == '0') dest = dest * 2;
+                else if (c == '1') dest = dest * 2 + 1;
+                else return false;
+            }
+            return true;
+        }
+
+        // Обычное число
+        std::istringstream iss(numStr);
+        iss >> dest;
+        return !iss.fail();
+    }
+
+    // Функция для парсинга double с суффиксом
+    bool parseDouble(const std::string& token, double& dest) {
+        if (token.empty()) return false;
+
+        std::string numStr = token;
+        if (token.back() == 'd') {
+            numStr = token.substr(0, token.length() - 1);
+        }
 
         std::istringstream iss(numStr);
-        unsigned long long value;
-        if (!(iss >> value)) {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        dest = value;
-        return in;
-    }
-
-    std::istream& parseComplex(std::istream& in, std::complex<double>& dest) {
-        char hash, c, open;
-        in >> hash >> c >> open;
-
-        if (hash != '#' || c != 'c' || open != '(') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        double real, imag;
-        if (!(in >> real >> imag)) {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        char close;
-        in >> close;
-        if (close != ')') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        dest = std::complex<double>(real, imag);
-        return in;
-    }
-
-    std::istream& parseQuotedString(std::istream& in, std::string& dest) {
-        char quote;
-        in >> quote;
-
-        if (quote != '"') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        std::getline(in, dest, '"');
-        return in;
+        iss >> dest;
+        return !iss.fail();
     }
 
     std::istream& operator>>(std::istream& in, DataStruct& dest) {
         std::istream::sentry sentry(in);
         if (!sentry) return in;
 
-        char openParen;
-        in >> openParen;
-        if (openParen != '(') {
+        // Пропускаем пробелы
+        while (std::isspace(in.peek())) in.get();
+
+        // Читаем '('
+        if (in.peek() != '(') {
             in.setstate(std::ios::failbit);
             return in;
         }
+        in.get();
 
         DataStruct input;
         bool hasKey1 = false, hasKey2 = false, hasKey3 = false;
 
+        // Читаем три пары
         for (int i = 0; i < 3; i++) {
-            char colon;
-            in >> colon;
-            if (colon != ':') {
+            // Пропускаем пробелы
+            while (std::isspace(in.peek())) in.get();
+
+            // Читаем ':'
+            if (in.peek() != ':') {
                 in.setstate(std::ios::failbit);
                 return in;
             }
+            in.get();
 
+            // Читаем ключ (key1, key2 или key3)
             std::string key;
-            in >> key;
+            while (in.peek() && std::isalpha(in.peek())) {
+                key += in.get();
+            }
 
+            // Пропускаем пробелы перед ':'
+            while (std::isspace(in.peek())) in.get();
+
+            // Читаем второй ':'
+            if (in.peek() != ':') {
+                in.setstate(std::ios::failbit);
+                return in;
+            }
+            in.get();
+
+            // Пропускаем пробелы перед значением
+            while (std::isspace(in.peek())) in.get();
+
+            // Читаем значение в зависимости от ключа
             if (key == "key1") {
-                in >> colon;
-                if (colon != ':') {
+                // Читаем число
+                std::string value;
+                while (in.peek() && (std::isalnum(in.peek()) || in.peek() == 'x' || in.peek() == 'b' || in.peek() == '.' || in.peek() == '-')) {
+                    value += in.get();
+                }
+                if (!parseNumber(value, input.key1)) {
                     in.setstate(std::ios::failbit);
                     return in;
                 }
-                parseNumber(in, input.key1);
                 hasKey1 = true;
             }
             else if (key == "key2") {
-                in >> colon;
-                if (colon != ':') {
-                    in.setstate(std::ios::failbit);
-                    return in;
-                }
-                char next;
-                in >> next;
-                in.putback(next);
-
-                if (next == '#') {
-                    parseComplex(in, input.key2);
+                // Проверяем, не комплексное ли число
+                if (in.peek() == '#') {
+                    in.get(); // '#'
+                    if (in.get() != 'c') {
+                        in.setstate(std::ios::failbit);
+                        return in;
+                    }
+                    if (in.get() != '(') {
+                        in.setstate(std::ios::failbit);
+                        return in;
+                    }
+                    double real, imag;
+                    in >> real >> imag;
+                    if (in.get() != ')') {
+                        in.setstate(std::ios::failbit);
+                        return in;
+                    }
+                    input.key2 = std::complex<double>(real, imag);
                 }
                 else {
-                    unsigned long long dummy;
-                    parseNumber(in, dummy);
-                    input.key2 = std::complex<double>(static_cast<double>(dummy), 0.0);
+                    // Обычное число
+                    std::string value;
+                    while (in.peek() && (std::isalnum(in.peek()) || in.peek() == '.' || in.peek() == '-' || in.peek() == 'e' || in.peek() == 'E')) {
+                        value += in.get();
+                    }
+                    double num;
+                    if (!parseDouble(value, num)) {
+                        in.setstate(std::ios::failbit);
+                        return in;
+                    }
+                    input.key2 = std::complex<double>(num, 0.0);
                 }
                 hasKey2 = true;
             }
             else if (key == "key3") {
-                in >> colon;
-                if (colon != ':') {
+                // Читаем строку в кавычках
+                if (in.get() != '"') {
                     in.setstate(std::ios::failbit);
                     return in;
                 }
-                parseQuotedString(in, input.key3);
+                std::getline(in, input.key3, '"');
                 hasKey3 = true;
             }
             else {
@@ -157,9 +184,9 @@ namespace nspace {
             }
         }
 
-        char closeParen;
-        in >> closeParen;
-        if (closeParen != ')') {
+        // Читаем ')'
+        while (std::isspace(in.peek())) in.get();
+        if (in.get() != ')') {
             in.setstate(std::ios::failbit);
             return in;
         }
@@ -177,8 +204,9 @@ namespace nspace {
     std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
         out << "(:key1 " << src.key1;
 
-        if (std::abs(src.key2.imag()) < EPS && std::abs(src.key2.real() - static_cast<unsigned long long>(src.key2.real())) < EPS) {
-            out << ":key2 " << static_cast<unsigned long long>(src.key2.real()) << "d";
+        // Проверяем, целое ли число у key2
+        if (std::abs(src.key2.imag()) < EPS) {
+            out << ":key2 " << static_cast<long long>(src.key2.real()) << "d";
         }
         else {
             out << ":key2 #c(" << std::fixed << std::setprecision(1)
@@ -207,19 +235,10 @@ namespace nspace {
 
 int main() {
     std::vector<nspace::DataStruct> data;
+    nspace::DataStruct temp;
 
-    while (std::cin) {
-        nspace::DataStruct temp;
-        if (std::cin >> temp) {
-            data.push_back(temp);
-        }
-        else if (std::cin.eof()) {
-            break;
-        }
-        else {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
+    while (std::cin >> temp) {
+        data.push_back(temp);
     }
 
     if (data.empty()) {
