@@ -1,8 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <iterator>
+#include <algorithm>
+#include <cctype>
 #include <sstream>
 
 struct DataStruct {
@@ -11,95 +12,227 @@ struct DataStruct {
     std::string key3;
 };
 
-std::istream& operator>>(std::istream& in, DataStruct& dest) {
-    std::istream::sentry sentry(in);
-    if (!sentry) return in;
+struct SeparatorIO {
+    char expected_char;
+};
 
-    DataStruct temp{0, '\0', ""};
-    bool k1 = false, k2 = false, k3 = false;
+std::istream& operator>>(std::istream& in, SeparatorIO&& dest) {
+    std::istream::sentry sentry(in, true);
+    if (!sentry) {
+        return in;
+    }
+    char c = '0';
+    in.get(c);
+    if (in && c != dest.expected_char) {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
+}
 
-    char c1 = 0, c2 = 0;
-    in >> c1 >> c2;
-    if (c1 != '(' || c2 != ':') {
+struct CharDataIO {
+    char& ref;
+};
+
+std::istream& operator>>(std::istream& in, CharDataIO&& dest) {
+    std::istream::sentry sentry(in, true);
+    if (!sentry) {
+        return in;
+    }
+    char c;
+    in >> SeparatorIO{'\''} >> c >> SeparatorIO{'\''};
+    if (in) {
+        dest.ref = c;
+    }
+    return in;
+}
+
+struct StringDataIO {
+    std::string& ref;
+};
+
+std::istream& operator>>(std::istream& in, StringDataIO&& dest) {
+    std::istream::sentry sentry(in, true);
+    if (!sentry) {
+        return in;
+    }
+
+    char c;
+    in.get(c);
+    if (c != '"') {
         in.setstate(std::ios::failbit);
         return in;
     }
 
-    for (int i = 0; i < 3; ++i) {
-        std::string keyLabel;
-        in >> keyLabel;
-
-        if (keyLabel == "key1" && !k1) {
-            in >> std::oct >> temp.key1;
-
-            int next = in.peek();
-            if (next == 'u' || next == 'U') {
-                in.get();
-                next = in.peek();
-                if (next == 'l' || next == 'L') in.get();
-                next = in.peek();
-                if (next == 'l' || next == 'L') in.get();
-            }
-            k1 = true;
-        }
-        else if (keyLabel == "key2" && !k2) {
-            char q1 = 0, q2 = 0;
-            in >> std::ws >> q1 >> std::noskipws >> temp.key2 >> std::skipws >> q2;
-            if (q1 != '\'' || q2 != '\'') in.setstate(std::ios::failbit);
-            k2 = true;
-        }
-        else if (keyLabel == "key3" && !k3) {
-            char q = 0;
-            in >> std::ws >> q;
-            if (q == '"') {
-                std::getline(in, temp.key3, '"');
-            } else {
-                in.setstate(std::ios::failbit);
-            }
-            k3 = true;
-        }
-        else {
-            in.setstate(std::ios::failbit);
-        }
-
-        if (i < 2) {
-            char colon = 0;
-            in >> colon;
-            if (colon != ':') in.setstate(std::ios::failbit);
-        }
+    dest.ref.clear();
+    while (in.get(c) && c != '"') {
+        dest.ref.push_back(c);
     }
 
-    char c3 = 0, c4 = 0;
-    in >> c3 >> c4;
-    if (c3 != ':' || c4 != ')') {
+    if (!in) {
         in.setstate(std::ios::failbit);
+        return in;
     }
-
-    if (in && k1 && k2 && k3) {
-        dest = temp;
-    } else {
-        in.setstate(std::ios::failbit);
-    }
-
     return in;
 }
 
-std::ostream& operator<<(std::ostream& os, const DataStruct& src) {
-    std::ostream::sentry sentry(os);
-    if (!sentry) return os;
+struct FieldLabelIO {
+    std::string& ref;
+};
 
-    std::ios_base::fmtflags f(os.flags());
-    os << "(:key1 0" << std::oct << src.key1 << "ull"
-       << ":key2 '" << src.key2 << "'"
-       << ":key3 \"" << src.key3 << "\":)";
-    os.flags(f);
+std::istream& operator>>(std::istream& in, FieldLabelIO&& dest) {
+    std::istream::sentry sentry(in, true);
+    if (!sentry) {
+        return in;
+    }
 
-    return os;
+    dest.ref.clear();
+    char c = '0';
+    while (in.get(c) && std::isalnum(static_cast<unsigned char>(c))) {
+        dest.ref.push_back(c);
+    }
+
+    if (dest.ref.empty()) {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
 }
 
-bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
-    if (a.key1 != b.key1) return a.key1 < b.key1;
-    if (a.key2 != b.key2) return a.key2 < b.key2;
+struct OctalDataIO {
+    unsigned long long& ref;
+};
+
+std::istream& operator>>(std::istream& in, OctalDataIO&& dest) {
+    std::istream::sentry sentry(in, true);
+    if (!sentry) {
+        return in;
+    }
+
+    unsigned long long value = 0;
+    char c;
+    in >> std::ws;
+    c = in.peek();
+    if (c != '0') {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    in.get();
+
+    while (in.get(c) && c >= '0' && c <= '7') {
+        value = value * 8 + (c - '0');
+    }
+    if (!in && !in.eof()) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    in.unget();
+
+    if (in) {
+        dest.ref = value;
+    }
+    return in;
+}
+
+std::istream& operator>>(std::istream& in, DataStruct& dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) {
+        return in;
+    }
+    while (std::isspace(in.peek())) {
+        in.get();
+    }
+
+    if (in.peek() != '(') {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+
+    DataStruct parsed_data;
+    bool has_k1 = false;
+    bool has_k2 = false;
+    bool has_k3 = false;
+
+    in >> SeparatorIO{'('};
+    if (!in) {
+        return in;
+    }
+
+    while (in && in.peek() != ')') {
+        if (in.peek() == ':') {
+            in.get();
+        }
+
+        std::string label;
+        in >> FieldLabelIO{label};
+        if (!in) {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        if (in.peek() == ' ') {
+            in.get();
+        }
+
+        if (label == "key1" && !has_k1) {
+            in >> OctalDataIO{parsed_data.key1};
+            has_k1 = true;
+        }
+        else if (label == "key2" && !has_k2) {
+            in >> CharDataIO{parsed_data.key2};
+            has_k2 = true;
+        }
+        else if (label == "key3" && !has_k3) {
+            in >> StringDataIO{parsed_data.key3};
+            has_k3 = true;
+        }
+        else {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        if (!in) {
+            return in;
+        }
+
+        if (in.peek() == ':') {
+            in.get();
+        }
+        else if (in.peek() != ')') {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+    }
+
+    in >> SeparatorIO{')'};
+
+    if (in && has_k1 && has_k2 && has_k3) {
+        dest = parsed_data;
+    }
+    else {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
+}
+
+std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
+    std::ostream::sentry sentry(out);
+    if (!sentry) {
+        return out;
+    }
+
+    out << "(:key1 0" << std::oct << src.key1 << std::dec
+        << ":key2 '" << src.key2
+        << "':key3 \"" << src.key3 << "\":)";
+
+    return out;
+}
+
+bool compareRecords(const DataStruct& a, const DataStruct& b) {
+    if (a.key1 != b.key1) {
+        return a.key1 < b.key1;
+    }
+    if (a.key2 != b.key2) {
+        return a.key2 < b.key2;
+    }
     return a.key3.length() < b.key3.length();
 }
 
@@ -108,17 +241,21 @@ int main() {
     std::string line;
 
     while (std::getline(std::cin, line)) {
-        if (line.find_first_not_of(" \t\r\n") == std::string::npos) continue;
+        if (std::all_of(line.begin(), line.end(), [](char c) {
+            return std::isspace(static_cast<unsigned char>(c));
+        })) {
+            continue;
+        }
 
-        std::istringstream iss(line);
+        std::istringstream lineStream(line);
         std::copy(
-            std::istream_iterator<DataStruct>(iss),
+            std::istream_iterator<DataStruct>(lineStream),
             std::istream_iterator<DataStruct>(),
             std::back_inserter(data)
         );
     }
 
-    std::sort(data.begin(), data.end(), compareDataStruct);
+    std::sort(data.begin(), data.end(), compareRecords);
 
     std::copy(
         data.begin(),
