@@ -1,12 +1,9 @@
 ﻿#include <iostream>
 #include <vector>
+#include <string>
+#include <complex>
 #include <algorithm>
 #include <iterator>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <cctype>
-#include <complex>
 #include <iomanip>
 
 struct DataStruct {
@@ -15,188 +12,80 @@ struct DataStruct {
   std::string key3;
 };
 
-bool isBinaryNumber(const std::string& s) {
-  if (s.length() < 3) return false;
-  if (s[0] != '0') return false;
-  if (s[1] != 'b' && s[1] != 'B') return false;
-  for (size_t i = 2; i < s.length(); ++i) {
-    if (s[i] != '0' && s[i] != '1') return false;
-  }
-  return true;
+void skipChar(std::istream& in, char exp) {
+  char c;
+  in >> c;
+  if (c != exp) in.setstate(std::ios::failbit);
 }
 
-unsigned long long binaryToULL(const std::string& s) {
-  unsigned long long result = 0;
-  for (size_t i = 2; i < s.length(); ++i) {
-    result = result * 2 + (s[i] - '0');
-  }
-  return result;
-}
-
-std::complex<double> parseComplex(const std::string& s) {
-  size_t openParen = s.find('(');
-  size_t closeParen = s.find(')');
-
-  if (openParen == std::string::npos || closeParen == std::string::npos) {
-    return std::complex<double>(0, 0);
-  }
-
-  std::string content = s.substr(openParen + 1, closeParen - openParen - 1);
-
-  size_t spacePos = content.find(' ');
-  if (spacePos == std::string::npos) {
-    return std::complex<double>(0, 0);
-  }
-
-  std::string realPart = content.substr(0, spacePos);
-  std::string imagPart = content.substr(spacePos + 1);
-
-  double real = std::stod(realPart);
-  double imag = std::stod(imagPart);
-
-  return std::complex<double>(real, imag);
-}
-
-std::istream& operator>>(std::istream& is, DataStruct& data) {
+std::istream& operator>>(std::istream& in, DataStruct& dest) {
   std::string line;
-  if (!std::getline(is, line)) {
-    return is;
-  }
+  if (!(in >> std::ws) || in.peek() != '(') return in;
 
-  size_t openParen = line.find('(');
-  size_t closeParen = line.find(')');
+  skipChar(in, '(');
+  skipChar(in, ':');
 
-  if (openParen == std::string::npos || closeParen == std::string::npos) {
-    is.setstate(std::ios::failbit);
-    return is;
-  }
+  DataStruct temp;
+  for (int i = 0; i < 3; ++i) {
+    std::string label;
+    std::getline(in, label, ' ');
 
-  std::string content = line.substr(openParen + 1, closeParen - openParen - 1);
-
-  data.key1 = 0;
-  data.key2 = std::complex<double>(0, 0);
-  data.key3 = "";
-
-  std::stringstream ss(content);
-  std::string part;
-
-  while (std::getline(ss, part, ':')) {
-    if (part.empty()) continue;
-
-    size_t spacePos = part.find(' ');
-    if (spacePos == std::string::npos) continue;
-
-    std::string fieldName = part.substr(0, spacePos);
-    std::string fieldValue = part.substr(spacePos + 1);
-
-    fieldValue.erase(0, fieldValue.find_first_not_of(" \t"));
-    fieldValue.erase(fieldValue.find_last_not_of(" \t") + 1);
-
-    if (fieldName == "key1") {
-      if (isBinaryNumber(fieldValue)) {
-        data.key1 = binaryToULL(fieldValue);
+    if (label == "key1") {
+      skipChar(in, '0'); skipChar(in, 'b');
+      std::string bin;
+      while (std::isdigit(in.peek())) {
+        char c; in >> c; bin += c;
       }
-      else {
-        is.setstate(std::ios::failbit);
-        return is;
-      }
+      temp.key1 = std::stoull(bin, nullptr, 2);
     }
-    else if (fieldName == "key2") {
-      if (fieldValue.find("#c") == 0) {
-        data.key2 = parseComplex(fieldValue);
-      }
-      else {
-        is.setstate(std::ios::failbit);
-        return is;
-      }
+    else if (label == "key2") {
+      double re, im;
+      skipChar(in, '#'); skipChar(in, 'c'); skipChar(in, '(');
+      in >> re >> im;
+      skipChar(in, ')');
+      temp.key2 = { re, im };
     }
-    else if (fieldName == "key3") {
-      if (fieldValue.length() >= 2 &&
-        fieldValue.front() == '"' &&
-        fieldValue.back() == '"') {
-        data.key3 = fieldValue.substr(1, fieldValue.length() - 2);
-      }
-      else {
-        is.setstate(std::ios::failbit);
-        return is;
-      }
+    else if (label == "key3") {
+      skipChar(in, '"');
+      std::getline(in, temp.key3, '"');
     }
+    skipChar(in, ':');
   }
+  skipChar(in, ')');
 
-  return is;
+  if (in) dest = temp;
+  return in;
 }
 
-std::ostream& operator<<(std::ostream& os, const DataStruct& data) {
-  os << "(:key1 ";
+std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
+  out << "(:key1 0b";
+  std::string b;
+  unsigned long long n = src.key1;
+  if (n == 0) b = "0";
+  while (n > 0) { b += (n % 2 ? '1' : '0'); n /= 2; }
+  std::reverse(b.begin(), b.end());
 
-  os << "0b";
-  if (data.key1 == 0) {
-    os << "0";
-  }
-  else {
-    unsigned long long temp = data.key1;
-    std::string binary;
-    while (temp > 0) {
-      binary = (temp % 2 == 0 ? "0" : "1") + binary;
-      temp /= 2;
-    }
-    os << binary;
-  }
-
-  os << ":key2 ";
-
-  os << "#c(" << std::fixed << std::setprecision(1)
-    << data.key2.real() << " " << data.key2.imag() << ")";
-
-  os << ":key3 \"" << data.key3 << "\":)";
-
-  return os;
-}
-
-bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
-  if (a.key1 != b.key1) {
-    return a.key1 < b.key1;
-  }
-
-  double modA = std::abs(a.key2);
-  double modB = std::abs(b.key2);
-  if (modA != modB) {
-    return modA < modB;
-  }
-
-  return a.key3.length() < b.key3.length();
+  out << b << ":key2 #c(" << std::fixed << std::setprecision(1)
+    << src.key2.real() << " " << src.key2.imag() << "):key3 \""
+    << src.key3 << "\":)";
+  return out;
 }
 
 int main() {
-  std::ifstream inputFile("input.txt");
-  if (!inputFile.is_open()) {
-    std::cerr << "Ошибка: не удалось открыть файл input.txt" << '\n';
-    return 1;
-  }
-
-  std::istream_iterator<DataStruct> itBegin(inputFile);
-  std::istream_iterator<DataStruct> itEnd;
-
   std::vector<DataStruct> data;
 
-  std::copy(itBegin, itEnd, std::back_inserter(data));
+  std::copy(std::istream_iterator<DataStruct>(std::cin),
+    std::istream_iterator<DataStruct>(),
+    std::back_inserter(data));
 
-  if (data.empty()) {
-    std::cerr << "Warning: Could not read any records" << '\n';
-  }
+  std::sort(data.begin(), data.end(), [](const DataStruct& a, const DataStruct& b) {
+    if (a.key1 != b.key1) return a.key1 < b.key1;
+    if (std::abs(a.key2) != std::abs(b.key2)) return std::abs(a.key2) < std::abs(b.key2);
+    return a.key3.length() < b.key3.length();
+    });
 
-  std::sort(data.begin(), data.end(), compareDataStruct);
-
-  std::ofstream outputFile("output.txt");
-  if (!outputFile.is_open()) {
-    std::cerr << "Error: Failed to open output.txt file" << '\n';
-    return 1;
-  }
-
-  std::ostream_iterator<DataStruct> itOut(outputFile, "\n");
-  std::copy(data.begin(), data.end(), itOut);
-
-  std::cout << "The program completed successfully! The result is written to output.txt." << std::endl;
+  std::copy(data.begin(), data.end(),
+    std::ostream_iterator<DataStruct>(std::cout, "\n"));
 
   return 0;
 }

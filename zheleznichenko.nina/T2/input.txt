@@ -1,3 +1,0 @@
-(:key1 0b1010:key2 #c(1.0 -1.0):key3 "hello":)
-(:key2 #c(2.0 -3.0):key3 "world":key1 0b1:)
-(:key1 0b1010:key3 "a":key2 #c(1.0 -1.0):)
