@@ -8,10 +8,15 @@
 // --- 4 ---
 int main() {
     std::vector<DataStruct> vec;
-
-    std::copy(std::istream_iterator<DataStruct>(std::cin),
-              std::istream_iterator<DataStruct>(),
-              std::back_inserter(vec));
+    while (!std::cin.eof()) {
+        std::copy(std::istream_iterator<DataStruct>(std::cin),
+                  std::istream_iterator<DataStruct>(),
+                  std::back_inserter(vec));
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+    }
 
     std::sort(vec.begin(), vec.end(), comparator);
     std::copy(

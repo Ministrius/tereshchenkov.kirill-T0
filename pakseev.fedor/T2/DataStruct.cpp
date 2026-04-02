@@ -117,7 +117,7 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
 
     for (size_t i = 0; i < 3; ++i) {
         std::string label;
-        if (!(std::getline(in, label, ' '))) break;
+        if (!(in >> label)) break;
 
         if (label == "key1") {
             if (!(in >> DoubleIO{ temp.key1 })) break;
@@ -187,12 +187,12 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& data) {
         }
     }
 
-
     out << "(:";
-    out << "key1: ";
+    out << "key1 ";
     out << std::fixed << std::setprecision(2) << mantissa;
     out << "e" << exponent;
-    out << "key2: " << data.key2;
+    out << ":key2 \'" << data.key2 << "\'";
+    out << ":key3 \"" << data.key3 << "\"";
     out << ":)";
     return out;
 }
