@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iomanip>
+#include <limits>
 
 struct DataStruct {
   unsigned long long key1;
