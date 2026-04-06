@@ -1,6 +1,6 @@
 #include "circle.h"
 
-Circle::Circle(const Point& center, double r) 
+Circle::Circle(const Point& center, double r)
 : centerP(center), radius(r){};
 
 double Circle::getArea()const{
