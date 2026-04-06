@@ -28,17 +28,25 @@ std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
   return in;
 }
 
-struct LabelIO {
-  std::string& label;
+struct KeyIO {
+  std::string& key;
 };
 
-std::istream& operator>>(std::istream& in, LabelIO&& dest) {
+std::istream& operator>>(std::istream& in, KeyIO&& dest) {
   std::istream::sentry sentry(in);
   if (!sentry) return in;
-  dest.label.clear();
-  for (int i = 0; i < 4; ++i) {
-    char c;
-    if (in >> c) dest.label += c;
+
+  if (!(in >> DelimiterIO{ ':' })) return in;
+
+  dest.key.clear();
+  char c;
+  while (in >> c && std::isalpha(c)) {
+    dest.key += c;
+    if (!std::isalpha(in.peek())) break;
+  }
+  if (in && std::isdigit(in.peek())) {
+    in >> c;
+    dest.key += c;
   }
   return in;
 }
@@ -48,12 +56,13 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
   if (!sentry) return in;
 
   DataStruct input;
-  if (!(in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' })) return in;
+  if (!(in >> DelimiterIO{ '(' })) return in;
 
-  for (int i = 0; i < 3 && in; ++i) {
-    std::string label;
-    in >> LabelIO{ label };
-    if (label == "key1") {
+  for (int i = 0; i < 3; ++i) {
+    std::string key;
+    if (!(in >> KeyIO{ key })) break;
+
+    if (key == "key1") {
       in >> DelimiterIO{ '0' } >> DelimiterIO{ 'b' };
       std::string bin;
       while (in.peek() == '0' || in.peek() == '1') {
@@ -62,18 +71,17 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
       if (!bin.empty()) input.key1 = std::stoull(bin, nullptr, 2);
       else in.setstate(std::ios::failbit);
     }
-    else if (label == "key2") {
+    else if (key == "key2") {
       double re, im;
       in >> DelimiterIO{ '#' } >> DelimiterIO{ 'c' } >> DelimiterIO{ '(' } >> re >> im >> DelimiterIO{ ')' };
       input.key2 = { re, im };
     }
-    else if (label == "key3") {
+    else if (key == "key3") {
       in >> DelimiterIO{ '"' };
       std::getline(in, input.key3, '"');
     }
-    in >> DelimiterIO{ ':' };
   }
-  in >> DelimiterIO{ ')' };
+  in >> DelimiterIO{ ':' } >> DelimiterIO{ ')' };
 
   if (in) dest = input;
   return in;
@@ -84,7 +92,6 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
   if (!sentry) return out;
 
   out << "(:key1 0b";
-
   if (src.key1 == 0) {
     out << "0";
   }
@@ -95,8 +102,6 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
       b += (n % 2 ? '1' : '0');
       n /= 2;
     }
-    if (src.key1 == 1) b += '0';
-
     std::reverse(b.begin(), b.end());
     out << b;
   }
@@ -111,9 +116,12 @@ int main() {
   std::vector<DataStruct> data;
 
   while (!std::cin.eof()) {
-    std::copy(std::istream_iterator<DataStruct>(std::cin),
+    std::copy(
+      std::istream_iterator<DataStruct>(std::cin),
       std::istream_iterator<DataStruct>(),
-      std::back_inserter(data));
+      std::back_inserter(data)
+    );
+
     if (std::cin.fail() && !std::cin.eof()) {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -122,7 +130,8 @@ int main() {
 
   std::sort(data.begin(), data.end(), [](const DataStruct& a, const DataStruct& b) {
     if (a.key1 != b.key1) return a.key1 < b.key1;
-    if (std::abs(a.key2) != std::abs(b.key2)) return std::abs(a.key2) < std::abs(b.key2);
+    if (std::abs(std::abs(a.key2) - std::abs(b.key2)) > 1e-9)
+      return std::abs(a.key2) < std::abs(b.key2);
     return a.key3.length() < b.key3.length();
     });
 
