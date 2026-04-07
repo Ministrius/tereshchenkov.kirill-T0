@@ -141,7 +141,7 @@ std::istream& operator>>(std::istream& in, LabelIO&& dest) {
     dest.ref.clear();
 
     char c = '0';
-    while (in.get(c) && !std::isspace((unsigned char)c)) {
+    while (in.get(c) && !std::isspace(static_cast<unsigned char>(c))) {
         dest.ref.push_back(c);
     }
 
@@ -152,7 +152,7 @@ std::istream& operator>>(std::istream& in, LabelIO&& dest) {
 }
 
 void cleanup_whitespaces(std::istream& in) {
-    while (in.peek() != EOF && std::isspace((unsigned char)in.peek())) {
+    while (in.peek() != EOF && std::isspace(static_cast<unsigned char>(in.peek()))) {
         in.get();
     }
 }
