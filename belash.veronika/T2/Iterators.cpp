@@ -50,109 +50,96 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
         return in;
     }
 
-    iofmtguard fmtguard(in);
-
-    char ch = 0;
-    std::string key;
-
-    in >> ch;
-    if (ch != '(')
+    std::string line;
+    while (std::getline(in, line))
     {
-        in.setstate(std::ios::failbit);
-        return in;
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back();
+        }
+
+        if (line.size() < 10 || line.front() != '(' || line.back() != ')')
+        {
+            continue;
+        }
+
+        std::istringstream iss(line);
+
+        char ch;
+        if (!(iss >> ch) || ch != '(')
+        {
+            continue;
+        }
+
+        DataStruct tmp{};
+        bool has_key1 = false;
+        bool has_key2 = false;
+        bool has_key3 = false;
+
+        while (true)
+        {
+            std::string label;
+            if (!(iss >> label))
+            {
+                break;
+            }
+
+            if (label == ":)")
+            {
+                break;
+            }
+
+            if (label == ":key1")
+            {
+                double val = 0.0;
+                char d = ' ';
+                if (iss >> val >> d)
+                {
+                    if (std::tolower(static_cast<unsigned char>(d)) == 'd')
+                    {
+                        tmp.key1 = val;
+                        has_key1 = true;
+                    }
+                }
+            }
+            else if (label == ":key2")
+            {
+                unsigned long long val = 0;
+                char u = ' ', l1 = ' ', l2 = ' ';
+                if (iss >> val >> u >> l1 >> l2)
+                {
+                    if (std::tolower(static_cast<unsigned char>(u)) == 'u' &&
+                        std::tolower(static_cast<unsigned char>(l1)) == 'l' &&
+                        std::tolower(static_cast<unsigned char>(l2)) == 'l')
+                    {
+                        tmp.key2 = val;
+                        has_key2 = true;
+                    }
+                }
+            }
+            else if (label == ":key3")
+            {
+                char quote = ' ';
+                if (iss >> quote && quote == '"')
+                {
+                    std::string val;
+                    if (std::getline(iss, val, '"'))
+                    {
+                        tmp.key3 = val;
+                        has_key3 = true;
+                    }
+                }
+            }
+        }
+
+        if (has_key1 && has_key2 && has_key3)
+        {
+            dest = tmp;
+            return in;
+        }
     }
 
-    in >> ch;
-    if (ch != ':')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> key;
-    if (key != "key1")
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    double val1;
-    char suffix;
-    in >> val1 >> suffix;
-    if (suffix != 'd' && suffix != 'D')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> ch;
-    if (ch != ':')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> key;
-    if (key != "key2")
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    unsigned long long val2;
-    std::string suffix2;
-    in >> val2 >> suffix2;
-
-    for (char& c : suffix2)
-        c = std::tolower(static_cast<unsigned char>(c));
-
-    if (suffix2 != "ull")
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> ch;
-    if (ch != ':')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> key;
-    if (key != "key3")
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-    char quote;
-    in >> quote;
-    if (quote != '"')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    std::string val3;
-    std::getline(in, val3, '"');
-    in >> ch;
-    if (ch != ':')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    in >> ch;
-    if (ch != ')')
-    {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    dest.key1 = val1;
-    dest.key2 = val2;
-    dest.key3 = val3;
-
+    in.setstate(std::ios::failbit);
     return in;
 }
 
@@ -176,7 +163,6 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src)
     out << "\":)";
     return out;
 }
-
 bool compareDataStruct(const DataStruct& a, const DataStruct& b)
 {
     if (a.key1 != b.key1)
