@@ -65,9 +65,7 @@ std::istream& operator>>(std::istream& in, UllHexIO&& dest) {
         in.setstate(std::ios::failbit);
         return in;
     }
-
-    // Исправление переполнения: проверяем длину и значение до конвертации
-    // ULL MAX = 18446744073709551615 = 0xFFFFFFFFFFFFFFFF (16 hex цифр)
+    
     if (hexStr.size() > 16) {
         in.setstate(std::ios::failbit);
         return in;
