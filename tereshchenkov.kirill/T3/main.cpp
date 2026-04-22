@@ -142,6 +142,7 @@ Polygon parsePolygon(const std::string& line) {
     std::istringstream iss(line);
     int n;
     if (!(iss >> n)) return {};
+    else if(n < 3) return {};
     Polygon poly;
     for (int i = 0; i < n; ++i) {
         char op, sem, cl;
@@ -199,11 +200,11 @@ int main(int argc, char* argv[]) {
                  std::cout << std::fixed << std::setprecision(1) << res << '\n';
             }
             else {
-                if (container.empty()) { std::cout << "0.0" << '\n'; continue; }
                 bool isNumber = (!sub.empty() && std::all_of(sub.begin(),sub.end(), ::isdigit));
                 if(isNumber){
                     size_t n = std::stoul(sub);
                     if(n > 2) {
+                        if (container.empty()) { std::cout << "0.0" << '\n'; continue; }
                         res = std::accumulate(container.begin(), container.end(), 0.0,
                          AreaSummator(std::bind(isVertexCountEqual, _1, n)));
                         std::cout << std::fixed << std::setprecision(1) << res << '\n';
