@@ -176,17 +176,13 @@ int main(int argc, char* argv[]) {
         Polygon p = parsePolygon(line);
         if (!p.points.empty()) container.push_back(p);
     }
-    std::set<Polygon> unique_set(container.begin(), container.end());
-    container.assign(unique_set.begin(), unique_set.end());
-
-
 
     std::string cmd;
     while (std::cin >> cmd) {
         if (cmd == "AREA") {
             std::string sub; std::cin >> sub;
             double res = 0;
-            if (container.empty()) { std::cout << "0.0" << '\n'; continue; }
+            if (container.empty()) { std::cout << "<INVALID COMMAND>" << '\n'; continue; }
             if (sub == "ODD"){
                 res = std::accumulate(container.begin(), container.end(), 0.0, AreaSummator(isVertexCountOdd));
                 std::cout << std::fixed << std::setprecision(1) << res << '\n';
