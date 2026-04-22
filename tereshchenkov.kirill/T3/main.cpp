@@ -110,6 +110,7 @@ Polygon parsePolygon(const std::string& line) {
     return (poly.points.size() == static_cast<size_t>(n)) ? poly : Polygon{};
 }
 
+
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
     std::ifstream file(argv[1]);
